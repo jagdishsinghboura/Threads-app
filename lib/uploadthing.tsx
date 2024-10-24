@@ -1,9 +1,8 @@
-"use server"
+
+
 import { OurFileRouter } from '@/app/api/uploadthing/core';
 import { generateReactHelpers } from '@uploadthing/react';
 
-console.log(typeof generateReactHelpers);
+console.log("sdfl;msd;lf", typeof generateReactHelpers);
 
-
-
-export const { useUploadThing, uploadFiles } = generateReactHelpers<OurFileRouter>();
+export const  { useUploadThing, uploadFiles } = generateReactHelpers<OurFileRouter>();

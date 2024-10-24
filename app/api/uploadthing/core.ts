@@ -1,11 +1,15 @@
-"use server"
-import { currentUser } from "@clerk/nextjs";
+"user server"
+
+import { currentUser } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
 
+
 const getUser = async () => await currentUser();
+
+
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
@@ -15,6 +19,8 @@ export const ourFileRouter = {
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       const user = await getUser();
+      console.log("userklsd f_________-------------------------",user);
+      
 
       // If you throw, the user will not be able to upload
       if (!user) throw new UploadThingError("Unauthorized");
