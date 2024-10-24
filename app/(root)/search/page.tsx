@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { fetchUser, fetchUsers } from '@/lib/actions/user.actions';
 import { currentUser } from '@clerk/nextjs/server';
-import UserCard from '@/components/cards/userCard';
+import UserCard from '@/components/cards/UserCard';
 
 const page =async () => {
     const user = await currentUser();
