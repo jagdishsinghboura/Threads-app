@@ -1,4 +1,3 @@
-"use server";
 
 import { currentUser } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
@@ -13,11 +12,9 @@ export const ourFileRouter = {
     .middleware(async () => {
       const user = await getUser();
       if (!user) throw new UploadThingError("Unauthorized");
-
       return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata }) => {
-      // This runs on your server *after* upload
       return { uploadedBy: metadata.userId };
     }),
 } satisfies FileRouter;
