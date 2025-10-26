@@ -20,6 +20,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
+        cz-shortcut-listen="true"
         >
           <Topbar />
           <main className="flex flex-row">

@@ -13,15 +13,28 @@ const page = async () => {
 
   //getActivity
   const activity = await getActivity(userInfo._id);
-  console.log("skajdfn", activity);
+
+ 
+  
+    const DateConvert = (createdAt:string) => {
+        const date = new Date(createdAt);
+        const day = date.getDate().toString().padStart(2, '0'); // 24
+        const month = date.toLocaleString('en-US', { month: 'short' }); // Oct
+        const year = date.getFullYear().toString().slice(-2); // 45
+
+        const formattedDate = `${day}-${month}-${year}`;
+        return formattedDate;
+
+    }
+  
 
 
 
   return (
     <section>
       <h1 className='head-text mb-10'>activity</h1>
-      <section className='mt-10 flex flex-col gap-5'>
-        {activity?.length > 0 ? (
+      <section className='mt-10 flex  flex-col-reverse  gap-5'>
+        {activity && activity?.length > 0 ? (
           activity?.map((act) => (
             <Link key={act._id} href={`/thread/${act.parentId}`}>
               <article className='activity-card'>
@@ -38,6 +51,8 @@ const page = async () => {
                   </span>{''}
                   replied to your thread
                 </p>
+
+                  <p className=' flex-1 text-end text-white font-sans  p-1'>{DateConvert(act.createdAt)}</p>
 
               </article>
             </Link>

@@ -1,6 +1,7 @@
 import mongoose, { mongo } from "mongoose";
 
 
+
 const communitySchema = new mongoose.Schema({
     id:{type:String, required:true},
     username:{type:String, required:true, unique:true},

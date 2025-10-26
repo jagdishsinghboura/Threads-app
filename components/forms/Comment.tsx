@@ -41,10 +41,9 @@ const Comment = ({ threadId, currentUserImage, currentuserId }: Props) => {
             thread: "",
         },
     });
-    
-    
-    console.log("ckldsafjadslkf", currentuserId);
-    
+
+
+
     const onSubmit = async (values: z.infer<typeof commentValidation>) => {
 
         await addCommentToThread(
@@ -69,12 +68,17 @@ const Comment = ({ threadId, currentUserImage, currentuserId }: Props) => {
                         render={({ field }) => (
                             <FormItem className='flex w-full items-center gap-3'>
                                 <FormLabel className=''>
-                                    <Image
+                                    {currentUserImage ? <Image
                                         src={currentUserImage}
-                                        alt="Profile image"
+                                        alt="Profile image "
+                                        className="rounded-full"
                                         width={48}
                                         height={48}
-                                    />
+                                    /> : <div className="h-10 w-10 rounded-full bg-orange-600">
+                                        <p>
+
+                                        </p>
+                                    </div>}
                                 </FormLabel>
                                 <FormControl className="border-none bg-transparent">
                                     <Input

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React from 'react'
 interface Props {
-  accoutnId: string,
+  accountId: string,
   authUserId: string,
   name: string,
   username: string,

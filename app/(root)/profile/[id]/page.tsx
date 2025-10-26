@@ -9,34 +9,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { profileTabs } from '@/constants';
 import Image from 'next/image';
 import ThreadsTab from '@/components/shared/ThreadsTab';
+import RepliesTab from '@/components/shared/RepliesTab';
 
-const page =async ({params}:{params:{id:string}}) => {
-    const user = await currentUser();
-    if (!user) {
-        return null;
-    }
-
-
-    const userInfo = await fetchUser(params?.id);
+const page = async ({ params }: { params: { id: string } }) => {
+  const user = await currentUser();
+  if (!user) {
+    return null;
+  }
 
 
-    if (!userInfo?.onboarded) redirect("/onboarding")
+  const userInfo = await fetchUser(params?.id);
+
+
+
+  if (!userInfo?.onboarded) redirect("/onboarding")
   return (
     <section>
-        <ProfileHeader
+      <ProfileHeader
         accountId={userInfo.id}
-        authUserId ={user.id}
+        authUserId={user.id}
         name={userInfo.name}
         username={userInfo.username}
         imgUrl={userInfo.image}
         bio={userInfo?.bio}
-        
-        />
 
-        <div className='mt-9'>
-          <Tabs defaultValue='threads' className="w-full" >
-           <TabsList className='tab'>
-            {profileTabs.map((tab)=>(
+      />
+
+      <div className='mt-9'>
+        <Tabs defaultValue='threads' className="w-full" >
+          <TabsList className='tab'>
+            {profileTabs.map((tab) => (
               <TabsTrigger key={tab.label} value={tab.value} className='tab'>
                 <Image
                   src={tab.icon}
@@ -46,26 +48,47 @@ const page =async ({params}:{params:{id:string}}) => {
                   className='object-contain'
                 />
                 <p className='max-sm:hidden'>{tab.label}</p>
-                {tab.label ==="Threads" &&(
+                {tab.label === "Threads" && (
                   <p className='ml-1 rounded-sm bg-light-4 px-2 py-1 text-tiny-medium text-light-2'>
                     {userInfo?.threads?.length}
                   </p>
                 )}
+
               </TabsTrigger>
             ))}
-           </TabsList>
-           {profileTabs.map((tab)=>(
+          </TabsList>
+          {profileTabs.map((tab) => (
             <TabsContent key={`content=${tab.label}`} value={tab.value} className="w-full text-light-1">
-              <ThreadsTab
+              {tab.value === "threads" && (
+                <ThreadsTab
                   currentUserId={user.id}
                   accountId={userInfo.id}
                   accountType="User"
-              />
+                />
+              )}
+
+              {tab.value === "replies" && (
+                <div className="mt-6">
+                  <RepliesTab 
+                  currentUserId={user.id}
+                  accountId={userInfo.id}
+                  accountType="User"
+                   />
+                </div>
+              )}
+              {tab.value === "tagged" && (
+                <div className="mt-6">
+                  <h2 className="text-heading3-bold mb-2">Tagged Posts</h2>
+                  <p className="text-base-regular text-light-3">
+                    You haven’t been tagged in any threads.
+                  </p>
+                </div>
+              )}
 
             </TabsContent>
-           ))}
-          </Tabs>
-        </div>
+          ))}
+        </Tabs>
+      </div>
     </section>
   )
 }

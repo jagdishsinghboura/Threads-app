@@ -5,6 +5,7 @@ import { connectDB } from "../mongoose";
 import Thread from "../model/thread.model";
 import { populate } from "dotenv";
 import { FilterQuery, SortOrder } from "mongoose";
+import Community from "../model/community.model";
 
 interface Params {
     userId: string,
@@ -39,7 +40,6 @@ export async function updateUser({
             },
             { upsert: true, new: true }
         );
-        console.log("user", user);
 
 
         if (path === "/profile/edit") {
@@ -55,11 +55,14 @@ export async function updateUser({
 export async function fetchUser(userId: string) {
     try {
         connectDB();
-        return await User.findOne({ id: userId })
+        
+        const user = await User.findOne({ id: userId })
         // .populate({
         //     path:"communities",
         //     model:"Community",
         // })
+
+        return JSON.parse(JSON.stringify(user));
 
 
     } catch (error: any) {
@@ -93,6 +96,61 @@ export async function fetchUserPosts(userId: string) {
 
     }
 }
+
+export async function fetchCommunitiesOfUser(userId: string) {
+  try {
+
+    if(!userId){
+      throw new Error("userId not found")
+    }
+    const user= await User.findOne({id:userId})
+
+    const communities = await Community.find({
+     members:user._id
+    })
+
+
+
+    return communities;
+
+  } catch (error) {
+    console.log("error in fetchCommunitiesOfUser", error)
+    throw error;
+  }
+}
+export async function fetchUserReplies(userId:string){
+    try {
+        connectDB();
+
+        const logInUser= await User.findOne({id:userId})  
+
+        const threads = await Thread.find({
+            author:logInUser._id,
+            $or:[
+                {
+                    parentId:{$exists:true, $ne:null}
+                }
+            ],
+            
+        }).
+        select("_id text parentId createdAt")
+        .populate({
+            path:"parentId",
+            model:"Thread",
+            select:"_id text author createdAt",
+            populate :{
+                path:"author",
+                model:"User",
+                select:"name id username"
+            }
+        });
+
+        return threads;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 
 export async function fetchUsers({
     userId,
@@ -128,11 +186,17 @@ export async function fetchUsers({
         const userQuery = await User.find(query)
             .sort(sortOptions)
             .skip(skipAmount)
-            .limit(pageSize);
+            .limit(pageSize)
+            .lean();
 
         const totalUserCount = await User.countDocuments(query);
 
-        const users = userQuery;
+        const users = userQuery.map((user: any) => ({
+            id: user._id?.toString(),     // or user.id if it's already string
+            name: user.name,
+            username: user.username,
+            image: user.image,
+        }));;
         const isNext = totalUserCount > skipAmount + users.length;
         return { users, isNext };
 
@@ -164,7 +228,6 @@ export async function getActivity(userId: string) {
             select: 'name image _id',
         });
 
-        console.log("userSawrn", childThreadIds);
 
         return replies;
 
@@ -173,3 +236,4 @@ export async function getActivity(userId: string) {
 
     }
 }
+

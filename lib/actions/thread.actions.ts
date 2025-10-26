@@ -5,6 +5,8 @@ import Thread from "../model/thread.model";
 import User from "../model/user.model";
 import { connectDB } from "../mongoose";
 import { populate } from "dotenv";
+import mongoose from "mongoose";
+import Community from "../model/community.model";
 
 interface Params {
     text: string,
@@ -15,22 +17,40 @@ interface Params {
 export async function createThread({ text, author, communityId, path }: Params) {
 
     try {
-        connectDB();
+        await connectDB();
+        let communityThread;
+
+        if (communityId) {
+            communityThread = await Community.findOne({ id: communityId });
+            const user = await User.findOne({ id: author });
+            author = user._id;
+        }
 
         const createdThread = await Thread.create({
             text,
             author,
-            community: null,
+            community: communityThread ? communityThread._id : null,
+        });
 
-        })
+        if (communityId) {
+            await Community.findByIdAndUpdate(
+                communityThread._id,
+                { $push: { threads: createdThread._id } },
+                { new: true }
+            );
 
-        //update user model
-
+        }
         await User.findByIdAndUpdate(author, {
             $push: { threads: createdThread._id }
-        })
+        });
+
+
+        //update user model
+        const plaincreatedThread = JSON.parse(JSON.stringify(createdThread));
+
 
         revalidatePath(path);
+        return plaincreatedThread;
     } catch (error) {
         console.log(`Error createing thread :::${error}`);
 
@@ -54,14 +74,16 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20) {
         .populate({
             path: "author",
             model: User,
-            select: "id name parentId image",
+            select: "id name parentId image username",
         })
 
     const totalPostsCount = await Thread.countDocuments({ parent: { $in: [null, undefined] } })
 
-    const posts = postQuery;
+    let posts = postQuery;
 
     const isNext = totalPostsCount > skipAmount + posts.length
+
+    posts = posts.filter((post)=>!post.community)
 
     return { posts, isNext };
 }
@@ -134,4 +156,44 @@ export async function addCommentToThread(
         throw new Error(`Error adding comment to Thread:${error.message}`)
 
     }
+}
+
+export async function addLikeToThread(
+    threadId: string,
+    userId: string,) {
+
+    await connectDB();
+
+    if (!threadId && !userId) {
+        throw new Error("fields are missing ")
+    }
+    try {
+        const user = await User.findOne({ id: userId });
+
+        if (!user) throw new Error('User not found');
+
+        const thread = await Thread.findById(threadId);
+        if (!thread) throw new Error('Thread not found');
+
+
+        // Prevent duplicate likes
+        const alreadyLiked = thread.likes.includes(userId);
+
+        if (alreadyLiked) {
+            // Unlike (remove)
+            thread.likes = thread.likes.filter((id: string) => id !== userId);
+        } else {
+            // Like (add)
+            thread.likes.push(userId);
+        }
+
+        await thread.save();
+
+
+    } catch (error: any) {
+        console.log(error);
+        throw new Error(`Error adding comment to Thread:${error.message}`)
+    }
+
+
 }

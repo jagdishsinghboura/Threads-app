@@ -6,14 +6,15 @@ import User from "../model/user.model";
 import Thread from "../model/thread.model";
 import Community from "../model/community.model";
 import { connectDB } from "../mongoose";
+import Communities from "@/components/shared/Communities";
 
 export async function createCommunity(
   id: string,
   name: string,
   username: string,
-  image: string,
   bio: string,
-  createdById: string // Change the parameter name to reflect it's an id
+  createdById: string,// Change the parameter name to reflect it's an id
+  image: string,
 ) {
   try {
     connectDB();
@@ -23,6 +24,7 @@ export async function createCommunity(
 
     if (!user) {
       throw new Error("User not found"); // Handle the case if the user with the id is not found
+
     }
 
     const newCommunity = new Community({
@@ -36,11 +38,23 @@ export async function createCommunity(
 
     const createdCommunity = await newCommunity.save();
 
-    // Update User model
+
+
+
+
+
+    createdCommunity.members.push(user._id);
+    await createdCommunity.save();
+
+    // Add the community's _id to the communities array in the user
+    
     user.communities.push(createdCommunity._id);
     await user.save();
 
-    return createdCommunity;
+    const plainCommunity = JSON.parse(JSON.stringify(createdCommunity));
+
+    return plainCommunity;
+
   } catch (error) {
     // Handle any errors
     console.error("Error creating community:", error);
@@ -59,9 +73,10 @@ export async function fetchCommunityDetails(id: string) {
         model: User,
         select: "name username image _id id",
       },
-    ]);
+    ]).lean();
 
-    return communityDetails;
+
+    return communityDetails
   } catch (error) {
     // Handle any errors
     console.error("Error fetching community details:", error);
@@ -69,11 +84,11 @@ export async function fetchCommunityDetails(id: string) {
   }
 }
 
-export async function fetchCommunityPosts(id: string) {
+export async function fetchCommunityPosts(iid: string) {
   try {
     connectDB();
 
-    const communityPosts = await Community.findById(id).populate({
+    const communityPosts = await Community.findOne({ id: iid }).populate({
       path: "threads",
       model: Thread,
       populate: [
@@ -92,9 +107,11 @@ export async function fetchCommunityPosts(id: string) {
           },
         },
       ],
-    });
+    }).lean();
 
-    return communityPosts;
+    const plainCommunityPosts = JSON.parse(JSON.stringify(communityPosts));
+
+    return plainCommunityPosts; // ✅ safe to send to client
   } catch (error) {
     // Handle any errors
     console.error("Error fetching community posts:", error);
@@ -158,6 +175,21 @@ export async function fetchCommunities({
   }
 }
 
+export async function fetchSuggestedCommunities(userId: string) {
+  try {
+
+    const user = await User.findOne({ id: userId });
+
+    const suggestedCommunities = await Community.find({ members: { $ne: user._id } })
+
+    const plainsuggestedCommunities = JSON.parse(JSON.stringify(suggestedCommunities));
+
+    return plainsuggestedCommunities
+  } catch (error) {
+    console.log("errro in suggestedCommunities", error);
+    throw error;
+  }
+}
 export async function addMemberToCommunity(
   communityId: string,
   memberId: string
@@ -179,6 +211,8 @@ export async function addMemberToCommunity(
       throw new Error("User not found");
     }
 
+    console.log(user, community)
+
     // Check if the user is already a member of the community
     if (community.members.includes(user._id)) {
       throw new Error("User is already a member of the community");
@@ -192,7 +226,9 @@ export async function addMemberToCommunity(
     user.communities.push(community._id);
     await user.save();
 
-    return community;
+    const plainCommunity = JSON.parse(JSON.stringify(community));
+
+    return plainCommunity;
   } catch (error) {
     // Handle any errors
     console.error("Error adding member to community:", error);

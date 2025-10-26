@@ -7,7 +7,6 @@ import React from 'react'
 
 export default function Bottombar() {
     const pathname = usePathname()
-    console.log(pathname);
     
   return (
     <section className='bottombar '>
